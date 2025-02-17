@@ -63,6 +63,9 @@ const Index = () => {
 
   const WalletCard = ({ user, total }: { user: "person1" | "person2"; total: number }) => {
     const isActive = activeDropdown === user;
+    const otherUserTotal = user === "person1" ? person2Total : person1Total;
+    const balance = total - otherUserTotal;
+    const status = balance === 0 ? "neutral" : balance > 0 ? "credit" : "debit";
     
     return (
       <Card className="p-6 glass-card hover-scale relative">
@@ -70,7 +73,17 @@ const Index = () => {
           <WalletCards className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-semibold">{user === "person1" ? "Person 1" : "Person 2"}'s Wallet</h2>
         </div>
-        <p className="text-3xl font-bold">${total.toFixed(2)}</p>
+        <div className="space-y-2">
+          <p className="text-3xl font-bold">${total.toFixed(2)}</p>
+          <p className={`text-sm font-medium ${
+            status === "credit" ? "text-green-600" : 
+            status === "debit" ? "text-red-600" : 
+            "text-gray-600"
+          }`}>
+            {status === "credit" ? "Credit: " : status === "debit" ? "Debit: " : "Balance: "}
+            ${Math.abs(balance / 2).toFixed(2)}
+          </p>
+        </div>
         <Button
           variant={isActive ? "secondary" : "default"}
           className="mt-4 w-full"
