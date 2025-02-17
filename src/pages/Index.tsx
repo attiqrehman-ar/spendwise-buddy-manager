@@ -14,10 +14,17 @@ interface Expense {
   date: Date;
 }
 
+interface ExpenseInput {
+  amount: string;
+  description: string;
+}
+
 const Index = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
+  const [expenseInputs, setExpenseInputs] = useState<Record<"person1" | "person2", ExpenseInput>>({
+    person1: { amount: "", description: "" },
+    person2: { amount: "", description: "" }
+  });
   const [activeDropdown, setActiveDropdown] = useState<"person1" | "person2" | null>(null);
   const { toast } = useToast();
 
@@ -32,7 +39,19 @@ const Index = () => {
   const difference = Math.abs(person1Total - person2Total);
   const whoOwes = person1Total > person2Total ? "Person 2" : "Person 1";
 
+  const updateExpenseInput = (user: "person1" | "person2", field: keyof ExpenseInput, value: string) => {
+    setExpenseInputs(prev => ({
+      ...prev,
+      [user]: {
+        ...prev[user],
+        [field]: value
+      }
+    }));
+  };
+
   const addExpense = (user: "person1" | "person2") => {
+    const { amount, description } = expenseInputs[user];
+    
     if (!amount || !description) {
       toast({
         title: "Error",
@@ -51,8 +70,10 @@ const Index = () => {
     };
 
     setExpenses([newExpense, ...expenses]);
-    setAmount("");
-    setDescription("");
+    setExpenseInputs(prev => ({
+      ...prev,
+      [user]: { amount: "", description: "" }
+    }));
     setActiveDropdown(null);
     
     toast({
@@ -100,13 +121,13 @@ const Index = () => {
               <Input
                 type="number"
                 placeholder="Amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={expenseInputs[user].amount}
+                onChange={(e) => updateExpenseInput(user, "amount", e.target.value)}
               />
               <Input
                 placeholder="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={expenseInputs[user].description}
+                onChange={(e) => updateExpenseInput(user, "description", e.target.value)}
               />
               <Button className="w-full" onClick={() => addExpense(user)}>
                 Add Expense
