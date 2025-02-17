@@ -1,12 +1,168 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Plus, WalletCards, ArrowLeftRight, History } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface Expense {
+  id: string;
+  amount: number;
+  description: string;
+  user: "person1" | "person2";
+  date: Date;
+}
 
 const Index = () => {
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [activeUser, setActiveUser] = useState<"person1" | "person2">("person1");
+  const { toast } = useToast();
+
+  const calculateTotal = (user: "person1" | "person2") => {
+    return expenses
+      .filter((expense) => expense.user === user)
+      .reduce((acc, curr) => acc + curr.amount, 0);
+  };
+
+  const person1Total = calculateTotal("person1");
+  const person2Total = calculateTotal("person2");
+  const difference = Math.abs(person1Total - person2Total);
+  const whoOwes = person1Total > person2Total ? "Person 2" : "Person 1";
+
+  const addExpense = () => {
+    if (!amount || !description) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newExpense: Expense = {
+      id: Date.now().toString(),
+      amount: parseFloat(amount),
+      description,
+      user: activeUser,
+      date: new Date(),
+    };
+
+    setExpenses([newExpense, ...expenses]);
+    setAmount("");
+    setDescription("");
+    
+    toast({
+      title: "Success",
+      description: "Expense added successfully",
+    });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen p-6 max-w-4xl mx-auto space-y-8">
+      <div className="text-center space-y-2 animate-fade-in">
+        <h1 className="text-4xl font-bold">SpendWise Buddy</h1>
+        <p className="text-muted-foreground">Track and split expenses effortlessly</p>
       </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="p-6 glass-card hover-scale">
+          <div className="flex items-center gap-2 mb-4">
+            <WalletCards className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Person 1's Wallet</h2>
+          </div>
+          <p className="text-3xl font-bold">${person1Total.toFixed(2)}</p>
+          <Button
+            variant={activeUser === "person1" ? "default" : "outline"}
+            className="mt-4 w-full"
+            onClick={() => setActiveUser("person1")}
+          >
+            Add Expense as Person 1
+          </Button>
+        </Card>
+
+        <Card className="p-6 glass-card hover-scale">
+          <div className="flex items-center gap-2 mb-4">
+            <WalletCards className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Person 2's Wallet</h2>
+          </div>
+          <p className="text-3xl font-bold">${person2Total.toFixed(2)}</p>
+          <Button
+            variant={activeUser === "person2" ? "default" : "outline"}
+            className="mt-4 w-full"
+            onClick={() => setActiveUser("person2")}
+          >
+            Add Expense as Person 2
+          </Button>
+        </Card>
+      </div>
+
+      <Card className="p-6 glass-card">
+        <div className="flex items-center gap-2 mb-4">
+          <Plus className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Add New Expense</h2>
+        </div>
+        <div className="space-y-4">
+          <Input
+            type="number"
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+          <Input
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <Button className="w-full" onClick={addExpense}>
+            Add Expense
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="p-6 glass-card">
+        <div className="flex items-center gap-2 mb-4">
+          <ArrowLeftRight className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Balance Summary</h2>
+        </div>
+        {difference > 0 ? (
+          <p className="text-lg">
+            <span className="font-semibold">{whoOwes}</span> owes{" "}
+            <span className="text-primary font-bold">${(difference / 2).toFixed(2)}</span>
+          </p>
+        ) : (
+          <p className="text-lg">All expenses are currently split evenly!</p>
+        )}
+      </Card>
+
+      <Card className="p-6 glass-card">
+        <div className="flex items-center gap-2 mb-4">
+          <History className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">Recent Expenses</h2>
+        </div>
+        <div className="space-y-4">
+          {expenses.slice(0, 5).map((expense) => (
+            <div
+              key={expense.id}
+              className="flex justify-between items-center p-3 bg-secondary rounded-lg animate-fade-in"
+            >
+              <div>
+                <p className="font-semibold">{expense.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {expense.user === "person1" ? "Person 1" : "Person 2"} •{" "}
+                  {new Date(expense.date).toLocaleDateString()}
+                </p>
+              </div>
+              <p className="font-bold">${expense.amount.toFixed(2)}</p>
+            </div>
+          ))}
+          {expenses.length === 0 && (
+            <p className="text-center text-muted-foreground">No expenses yet</p>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };
