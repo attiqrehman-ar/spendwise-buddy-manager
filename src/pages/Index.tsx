@@ -68,32 +68,34 @@ const Index = () => {
     const status = balance === 0 ? "neutral" : balance > 0 ? "credit" : "debit";
     
     return (
-      <Card className="p-6 glass-card hover-scale relative">
-        <div className="flex items-center gap-2 mb-4">
-          <WalletCards className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">{user === "person1" ? "Person 1" : "Person 2"}'s Wallet</h2>
-        </div>
-        <div className="space-y-2">
-          <p className="text-3xl font-bold">${total.toFixed(2)}</p>
-          <p className={`text-sm font-medium ${
-            status === "credit" ? "text-green-600" : 
-            status === "debit" ? "text-red-600" : 
-            "text-gray-600"
-          }`}>
-            {status === "credit" ? "Credit: " : status === "debit" ? "Debit: " : "Balance: "}
-            ${Math.abs(balance / 2).toFixed(2)}
-          </p>
-        </div>
-        <Button
-          variant={isActive ? "secondary" : "default"}
-          className="mt-4 w-full"
-          onClick={() => setActiveDropdown(isActive ? null : user)}
-        >
-          {isActive ? "Cancel" : `Add Expense as ${user === "person1" ? "Person 1" : "Person 2"}`}
-        </Button>
+      <div className="relative">
+        <Card className="p-6 glass-card hover-scale">
+          <div className="flex items-center gap-2 mb-4">
+            <WalletCards className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">{user === "person1" ? "Person 1" : "Person 2"}'s Wallet</h2>
+          </div>
+          <div className="space-y-2">
+            <p className="text-3xl font-bold">${total.toFixed(2)}</p>
+            <p className={`text-sm font-medium ${
+              status === "credit" ? "text-green-600" : 
+              status === "debit" ? "text-red-600" : 
+              "text-gray-600"
+            }`}>
+              {status === "credit" ? "Credit: " : status === "debit" ? "Debit: " : "Balance: "}
+              ${Math.abs(balance / 2).toFixed(2)}
+            </p>
+          </div>
+          <Button
+            variant={isActive ? "secondary" : "default"}
+            className="mt-4 w-full"
+            onClick={() => setActiveDropdown(isActive ? null : user)}
+          >
+            {isActive ? "Cancel" : `Add Expense as ${user === "person1" ? "Person 1" : "Person 2"}`}
+          </Button>
+        </Card>
         
         {isActive && (
-          <div className="absolute top-full left-0 right-0 mt-2 p-4 glass-card rounded-lg z-10 animate-fade-in">
+          <Card className="absolute top-full left-0 right-0 mt-2 p-4 glass-card z-50 animate-fade-in shadow-xl">
             <div className="space-y-4">
               <Input
                 type="number"
@@ -110,9 +112,9 @@ const Index = () => {
                 Add Expense
               </Button>
             </div>
-          </div>
+          </Card>
         )}
-      </Card>
+      </div>
     );
   };
 
