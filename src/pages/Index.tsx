@@ -9,7 +9,7 @@ interface Expense {
   id: string;
   amount: number;
   description: string;
-  user: "person1" | "person2";
+  user: "Attiq" | "Ahsan";
   date: Date;
 }
 
@@ -59,7 +59,7 @@ const WalletCard = memo(({
   onInputChange,
   onSubmit
 }: { 
-  user: "person1" | "person2";
+  user: "Attiq" | "Ahsan";
   total: number;
   otherUserTotal: number;
   isActive: boolean;
@@ -76,7 +76,7 @@ const WalletCard = memo(({
       <Card className="p-6 glass-card hover-scale">
         <div className="flex items-center gap-2 mb-4">
           <WalletCards className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">{user === "person1" ? "Person 1" : "Person 2"}'s Wallet</h2>
+          <h2 className="text-xl font-semibold">{user === "Attiq" ? "Attiq" : "Ahsan"}'s Wallet</h2>
         </div>
         <div className="space-y-2">
           <p className="text-3xl font-bold">${total.toFixed(2)}</p>
@@ -94,7 +94,7 @@ const WalletCard = memo(({
           className="mt-4 w-full"
           onClick={onToggleDropdown}
         >
-          {isActive ? "Cancel" : `Add Expense as ${user === "person1" ? "Person 1" : "Person 2"}`}
+          {isActive ? "Cancel" : `Add Expense as ${user === "Attiq" ? "Attiq" : "Ahsan"}`}
         </Button>
       </Card>
       
@@ -128,11 +128,11 @@ const Index = () => {
     return [];
   });
 
-  const [expenseInputs, setExpenseInputs] = useState<Record<"person1" | "person2", ExpenseInput>>({
-    person1: { amount: "", description: "" },
-    person2: { amount: "", description: "" }
+  const [expenseInputs, setExpenseInputs] = useState<Record<"Attiq" | "Ahsan", ExpenseInput>>({
+    Attiq: { amount: "", description: "" },
+    Ahsan: { amount: "", description: "" }
   });
-  const [activeDropdown, setActiveDropdown] = useState<"person1" | "person2" | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<"Attiq" | "Ahsan" | null>(null);
   const { toast } = useToast();
 
   // Save expenses to localStorage whenever they change
@@ -140,18 +140,18 @@ const Index = () => {
     localStorage.setItem('expenses', JSON.stringify(expenses));
   }, [expenses]);
 
-  const calculateTotal = (user: "person1" | "person2") => {
+  const calculateTotal = (user: "Attiq" | "Ahsan") => {
     return expenses
       .filter((expense) => expense.user === user)
       .reduce((acc, curr) => acc + curr.amount, 0);
   };
 
-  const person1Total = calculateTotal("person1");
-  const person2Total = calculateTotal("person2");
-  const difference = Math.abs(person1Total - person2Total);
-  const whoOwes = person1Total > person2Total ? "Person 2" : "Person 1";
+  const AttiqTotal = calculateTotal("Attiq");
+  const AhsanTotal = calculateTotal("Ahsan");
+  const difference = Math.abs(AttiqTotal - AhsanTotal);
+  const whoOwes = AttiqTotal > AhsanTotal ? "Ahsan" : "Attiq";
 
-  const updateExpenseInput = (user: "person1" | "person2", field: keyof ExpenseInput, value: string) => {
+  const updateExpenseInput = (user: "Attiq" | "Ahsan", field: keyof ExpenseInput, value: string) => {
     setExpenseInputs(prev => ({
       ...prev,
       [user]: {
@@ -161,7 +161,7 @@ const Index = () => {
     }));
   };
 
-  const addExpense = (user: "person1" | "person2") => {
+  const addExpense = (user: "Attiq" | "Ahsan") => {
     const { amount, description } = expenseInputs[user];
     
     if (!amount || !description) {
@@ -223,24 +223,24 @@ const Index = () => {
 
       <div className="grid md:grid-cols-2 gap-6">
         <WalletCard
-          user="person1"
-          total={person1Total}
-          otherUserTotal={person2Total}
-          isActive={activeDropdown === "person1"}
-          inputs={expenseInputs.person1}
-          onToggleDropdown={() => setActiveDropdown(activeDropdown === "person1" ? null : "person1")}
-          onInputChange={(field, value) => updateExpenseInput("person1", field, value)}
-          onSubmit={() => addExpense("person1")}
+          user="Attiq"
+          total={AttiqTotal}
+          otherUserTotal={AhsanTotal}
+          isActive={activeDropdown === "Attiq"}
+          inputs={expenseInputs.Attiq}
+          onToggleDropdown={() => setActiveDropdown(activeDropdown === "Attiq" ? null : "Attiq")}
+          onInputChange={(field, value) => updateExpenseInput("Attiq", field, value)}
+          onSubmit={() => addExpense("Attiq")}
         />
         <WalletCard
-          user="person2"
-          total={person2Total}
-          otherUserTotal={person1Total}
-          isActive={activeDropdown === "person2"}
-          inputs={expenseInputs.person2}
-          onToggleDropdown={() => setActiveDropdown(activeDropdown === "person2" ? null : "person2")}
-          onInputChange={(field, value) => updateExpenseInput("person2", field, value)}
-          onSubmit={() => addExpense("person2")}
+          user="Ahsan"
+          total={AhsanTotal}
+          otherUserTotal={AttiqTotal}
+          isActive={activeDropdown === "Ahsan"}
+          inputs={expenseInputs.Ahsan}
+          onToggleDropdown={() => setActiveDropdown(activeDropdown === "Ahsan" ? null : "Ahsan")}
+          onInputChange={(field, value) => updateExpenseInput("Ahsan", field, value)}
+          onSubmit={() => addExpense("Ahsan")}
         />
       </div>
 
@@ -282,7 +282,7 @@ const Index = () => {
               <div>
                 <p className="font-semibold">{expense.description}</p>
                 <p className="text-sm text-muted-foreground">
-                  {expense.user === "person1" ? "Person 1" : "Person 2"} •{" "}
+                  {expense.user === "Attiq" ? "Attiq" : "Ahsan"} •{" "}
                   {new Date(expense.date).toLocaleDateString()}
                 </p>
               </div>
