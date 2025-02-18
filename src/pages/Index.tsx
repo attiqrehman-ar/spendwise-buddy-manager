@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,13 +114,31 @@ const WalletCard = memo(({
 WalletCard.displayName = "WalletCard";
 
 const Index = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    // Load expenses from localStorage on initial render
+    const savedExpenses = localStorage.getItem('expenses');
+    if (savedExpenses) {
+      const parsedExpenses = JSON.parse(savedExpenses);
+      // Convert string dates back to Date objects
+      return parsedExpenses.map((expense: any) => ({
+        ...expense,
+        date: new Date(expense.date)
+      }));
+    }
+    return [];
+  });
+
   const [expenseInputs, setExpenseInputs] = useState<Record<"person1" | "person2", ExpenseInput>>({
     person1: { amount: "", description: "" },
     person2: { amount: "", description: "" }
   });
   const [activeDropdown, setActiveDropdown] = useState<"person1" | "person2" | null>(null);
   const { toast } = useToast();
+
+  // Save expenses to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('expenses', JSON.stringify(expenses));
+  }, [expenses]);
 
   const calculateTotal = (user: "person1" | "person2") => {
     return expenses
