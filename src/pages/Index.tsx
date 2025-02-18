@@ -1,4 +1,3 @@
-
 import { useState, memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,14 +18,12 @@ interface ExpenseInput {
   description: string;
 }
 
-// Memoized expense input form to prevent re-renders
+// Memoized expense input form
 const ExpenseForm = memo(({ 
-  user, 
   inputs, 
   onInputChange, 
   onSubmit 
 }: { 
-  user: "person1" | "person2";
   inputs: ExpenseInput;
   onInputChange: (field: keyof ExpenseInput, value: string) => void;
   onSubmit: () => void;
@@ -50,6 +47,71 @@ const ExpenseForm = memo(({
 ));
 
 ExpenseForm.displayName = "ExpenseForm";
+
+// Memoized WalletCard component
+const WalletCard = memo(({ 
+  user, 
+  total, 
+  otherUserTotal,
+  isActive,
+  inputs,
+  onToggleDropdown,
+  onInputChange,
+  onSubmit
+}: { 
+  user: "person1" | "person2";
+  total: number;
+  otherUserTotal: number;
+  isActive: boolean;
+  inputs: ExpenseInput;
+  onToggleDropdown: () => void;
+  onInputChange: (field: keyof ExpenseInput, value: string) => void;
+  onSubmit: () => void;
+}) => {
+  const balance = total - otherUserTotal;
+  const status = balance === 0 ? "neutral" : balance > 0 ? "credit" : "debit";
+  
+  return (
+    <div className="relative">
+      <Card className="p-6 glass-card hover-scale">
+        <div className="flex items-center gap-2 mb-4">
+          <WalletCards className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">{user === "person1" ? "Person 1" : "Person 2"}'s Wallet</h2>
+        </div>
+        <div className="space-y-2">
+          <p className="text-3xl font-bold">${total.toFixed(2)}</p>
+          <p className={`text-sm font-medium ${
+            status === "credit" ? "text-green-600" : 
+            status === "debit" ? "text-red-600" : 
+            "text-gray-600"
+          }`}>
+            {status === "credit" ? "Credit: " : status === "debit" ? "Debit: " : "Balance: "}
+            ${Math.abs(balance / 2).toFixed(2)}
+          </p>
+        </div>
+        <Button
+          variant={isActive ? "secondary" : "default"}
+          className="mt-4 w-full"
+          onClick={onToggleDropdown}
+        >
+          {isActive ? "Cancel" : `Add Expense as ${user === "person1" ? "Person 1" : "Person 2"}`}
+        </Button>
+      </Card>
+      
+      {isActive && (
+        <Card className="absolute top-full left-0 right-0 mt-2 p-4 glass-card z-50 animate-fade-in shadow-xl">
+          <ExpenseForm
+            inputs={inputs}
+            onInputChange={onInputChange}
+            onSubmit={onSubmit}
+          />
+        </Card>
+      )}
+    </div>
+  );
+});
+
+WalletCard.displayName = "WalletCard";
 
 const Index = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -114,53 +176,6 @@ const Index = () => {
     });
   };
 
-  const WalletCard = ({ user, total }: { user: "person1" | "person2"; total: number }) => {
-    const isActive = activeDropdown === user;
-    const otherUserTotal = user === "person1" ? person2Total : person1Total;
-    const balance = total - otherUserTotal;
-    const status = balance === 0 ? "neutral" : balance > 0 ? "credit" : "debit";
-    
-    return (
-      <div className="relative">
-        <Card className="p-6 glass-card hover-scale">
-          <div className="flex items-center gap-2 mb-4">
-            <WalletCards className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">{user === "person1" ? "Person 1" : "Person 2"}'s Wallet</h2>
-          </div>
-          <div className="space-y-2">
-            <p className="text-3xl font-bold">${total.toFixed(2)}</p>
-            <p className={`text-sm font-medium ${
-              status === "credit" ? "text-green-600" : 
-              status === "debit" ? "text-red-600" : 
-              "text-gray-600"
-            }`}>
-              {status === "credit" ? "Credit: " : status === "debit" ? "Debit: " : "Balance: "}
-              ${Math.abs(balance / 2).toFixed(2)}
-            </p>
-          </div>
-          <Button
-            variant={isActive ? "secondary" : "default"}
-            className="mt-4 w-full"
-            onClick={() => setActiveDropdown(isActive ? null : user)}
-          >
-            {isActive ? "Cancel" : `Add Expense as ${user === "person1" ? "Person 1" : "Person 2"}`}
-          </Button>
-        </Card>
-        
-        {isActive && (
-          <Card className="absolute top-full left-0 right-0 mt-2 p-4 glass-card z-50 animate-fade-in shadow-xl">
-            <ExpenseForm
-              user={user}
-              inputs={expenseInputs[user]}
-              onInputChange={(field, value) => updateExpenseInput(user, field, value)}
-              onSubmit={() => addExpense(user)}
-            />
-          </Card>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen p-6 max-w-4xl mx-auto space-y-8">
       <div className="text-center space-y-2 animate-fade-in">
@@ -171,8 +186,26 @@ const Index = () => {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <WalletCard user="person1" total={person1Total} />
-        <WalletCard user="person2" total={person2Total} />
+        <WalletCard
+          user="person1"
+          total={person1Total}
+          otherUserTotal={person2Total}
+          isActive={activeDropdown === "person1"}
+          inputs={expenseInputs.person1}
+          onToggleDropdown={() => setActiveDropdown(activeDropdown === "person1" ? null : "person1")}
+          onInputChange={(field, value) => updateExpenseInput("person1", field, value)}
+          onSubmit={() => addExpense("person1")}
+        />
+        <WalletCard
+          user="person2"
+          total={person2Total}
+          otherUserTotal={person1Total}
+          isActive={activeDropdown === "person2"}
+          inputs={expenseInputs.person2}
+          onToggleDropdown={() => setActiveDropdown(activeDropdown === "person2" ? null : "person2")}
+          onInputChange={(field, value) => updateExpenseInput("person2", field, value)}
+          onSubmit={() => addExpense("person2")}
+        />
       </div>
 
       <Card className="p-6 glass-card">
