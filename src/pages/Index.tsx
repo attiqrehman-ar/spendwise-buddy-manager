@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,38 @@ interface ExpenseInput {
   amount: string;
   description: string;
 }
+
+// Memoized expense input form to prevent re-renders
+const ExpenseForm = memo(({ 
+  user, 
+  inputs, 
+  onInputChange, 
+  onSubmit 
+}: { 
+  user: "person1" | "person2";
+  inputs: ExpenseInput;
+  onInputChange: (field: keyof ExpenseInput, value: string) => void;
+  onSubmit: () => void;
+}) => (
+  <div className="space-y-4">
+    <Input
+      type="number"
+      placeholder="Amount"
+      value={inputs.amount}
+      onChange={(e) => onInputChange("amount", e.target.value)}
+    />
+    <Input
+      placeholder="Description"
+      value={inputs.description}
+      onChange={(e) => onInputChange("description", e.target.value)}
+    />
+    <Button className="w-full" onClick={onSubmit}>
+      Add Expense
+    </Button>
+  </div>
+));
+
+ExpenseForm.displayName = "ExpenseForm";
 
 const Index = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -117,22 +149,12 @@ const Index = () => {
         
         {isActive && (
           <Card className="absolute top-full left-0 right-0 mt-2 p-4 glass-card z-50 animate-fade-in shadow-xl">
-            <div className="space-y-4">
-              <Input
-                type="number"
-                placeholder="Amount"
-                value={expenseInputs[user].amount}
-                onChange={(e) => updateExpenseInput(user, "amount", e.target.value)}
-              />
-              <Input
-                placeholder="Description"
-                value={expenseInputs[user].description}
-                onChange={(e) => updateExpenseInput(user, "description", e.target.value)}
-              />
-              <Button className="w-full" onClick={() => addExpense(user)}>
-                Add Expense
-              </Button>
-            </div>
+            <ExpenseForm
+              user={user}
+              inputs={expenseInputs[user]}
+              onInputChange={(field, value) => updateExpenseInput(user, field, value)}
+              onSubmit={() => addExpense(user)}
+            />
           </Card>
         )}
       </div>
