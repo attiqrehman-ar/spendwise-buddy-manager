@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: 
+**URL**: https://spendwise-buddy-manager.vercel.app/ 
 
 ## How can I edit this code?
 
