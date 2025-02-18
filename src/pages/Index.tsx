@@ -194,6 +194,24 @@ const Index = () => {
     });
   };
 
+  const downloadExpenses = () => {
+    const expensesData = JSON.stringify(expenses, null, 2);
+    const blob = new Blob([expensesData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `expenses-${new Date().toLocaleDateString()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Success",
+      description: "Expenses downloaded successfully",
+    });
+  };
+
   return (
     <div className="min-h-screen p-6 max-w-4xl mx-auto space-y-8">
       <div className="text-center space-y-2 animate-fade-in">
@@ -227,9 +245,18 @@ const Index = () => {
       </div>
 
       <Card className="p-6 glass-card">
-        <div className="flex items-center gap-2 mb-4">
-          <ArrowLeftRight className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">Balance Summary</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <ArrowLeftRight className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Balance Summary</h2>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={downloadExpenses}
+            className="flex items-center gap-2"
+          >
+            Download Expenses
+          </Button>
         </div>
         {difference > 0 ? (
           <p className="text-lg">
