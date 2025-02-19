@@ -184,17 +184,46 @@ const Index = () => {
       .reduce((acc, curr) => acc + curr.amount, 0);
   };
 
-  const calculateOthersTotal = (userId: string) => {
-    // Get total expenses excluding the current user
-    const othersExpenses = expenses.filter((expense) => expense.userId !== userId);
-    return othersExpenses.reduce((acc, curr) => acc + curr.amount, 0);
-  };
-
-  const calculateBalance = (userId: string) => {
-    const userTotal = calculateTotal(userId);
+  const calculateBalances = () => {
     const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
     const perPersonShare = totalExpenses / people.length;
-    return userTotal - perPersonShare;
+    
+    return people.map(person => {
+      const personTotal = calculateTotal(person.id);
+      const balance = personTotal - perPersonShare;
+      
+      return {
+        personId: person.id,
+        personName: person.name,
+        total: personTotal,
+        balance: balance,
+        shouldReceive: balance > 0,
+        amount: Math.abs(balance)
+      };
+    });
+  };
+
+  const renderWalletCard = (person: Person) => {
+    const total = calculateTotal(person.id);
+    const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+    const perPersonShare = totalExpenses / people.length;
+    const balance = total - perPersonShare;
+
+    return (
+      <WalletCard
+        key={person.id}
+        person={person}
+        total={total}
+        otherUsersTotal={totalExpenses - total}
+        isActive={activeDropdown === person.id}
+        inputs={expenseInputs[person.id]}
+        onNameChange={(name) => updatePersonName(person.id, name)}
+        onToggleDropdown={() => setActiveDropdown(activeDropdown === person.id ? null : person.id)}
+        onInputChange={(field, value) => updateExpenseInput(person.id, field, value)}
+        onSubmit={() => addExpense(person.id)}
+        onDelete={() => deletePerson(person.id)}
+      />
+    );
   };
 
   const updateExpenseInput = (userId: string, field: keyof ExpenseInput, value: string) => {
@@ -301,24 +330,7 @@ const Index = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {people.map(person => {
-          const balance = calculateBalance(person.id);
-          return (
-            <WalletCard
-              key={person.id}
-              person={person}
-              total={calculateTotal(person.id)}
-              otherUsersTotal={calculateOthersTotal(person.id)}
-              isActive={activeDropdown === person.id}
-              inputs={expenseInputs[person.id]}
-              onNameChange={(name) => updatePersonName(person.id, name)}
-              onToggleDropdown={() => setActiveDropdown(activeDropdown === person.id ? null : person.id)}
-              onInputChange={(field, value) => updateExpenseInput(person.id, field, value)}
-              onSubmit={() => addExpense(person.id)}
-              onDelete={() => deletePerson(person.id)}
-            />
-          );
-        })}
+        {people.map(person => renderWalletCard(person))}
         <Button
           onClick={addPerson}
           className="h-full min-h-[200px] flex flex-col gap-2 border-2 border-dashed border-primary/20 hover:border-primary/50 transition-colors"
@@ -353,29 +365,26 @@ const Index = () => {
               </p>
             </Card>
             <Card className="p-4 bg-secondary/50">
-              <p className="text-sm text-muted-foreground mb-2">Per Person Share</p>
+              <p className="text-sm text-muted-foreground mb-2">Share per Person ({people.length})</p>
               <p className="text-2xl font-bold">
                 ${(expenses.reduce((acc, curr) => acc + curr.amount, 0) / people.length).toFixed(2)}
               </p>
             </Card>
           </div>
           <div className="space-y-3 mt-4">
-            {people.map(person => {
-              const balance = calculateBalance(person.id);
-              return (
-                <div key={person.id} className="flex justify-between items-center p-3 bg-secondary/30 rounded-lg">
-                  <span className="font-semibold">{person.name}</span>
-                  <span className={`font-bold ${
-                    balance > 0 ? "text-green-600" : 
-                    balance < 0 ? "text-red-600" : 
-                    "text-gray-600"
-                  }`}>
-                    ${Math.abs(balance).toFixed(2)}
-                    {balance > 0 ? " (to receive)" : balance < 0 ? " (to pay)" : " (settled)"}
-                  </span>
-                </div>
-              );
-            })}
+            {calculateBalances().map(({ personId, personName, balance, shouldReceive, amount }) => (
+              <div key={personId} className="flex justify-between items-center p-3 bg-secondary/30 rounded-lg">
+                <span className="font-semibold">{personName}</span>
+                <span className={`font-bold ${
+                  shouldReceive ? "text-green-600" : 
+                  balance < 0 ? "text-red-600" : 
+                  "text-gray-600"
+                }`}>
+                  ${amount.toFixed(2)}
+                  {shouldReceive ? " (to receive)" : balance < 0 ? " (to pay)" : " (settled)"}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </Card>
