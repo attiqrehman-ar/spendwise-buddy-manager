@@ -1,4 +1,3 @@
-
 import { useState, memo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -186,9 +185,16 @@ const Index = () => {
   };
 
   const calculateOthersTotal = (userId: string) => {
-    return expenses
-      .filter((expense) => expense.userId !== userId)
-      .reduce((acc, curr) => acc + curr.amount, 0);
+    // Get total expenses excluding the current user
+    const othersExpenses = expenses.filter((expense) => expense.userId !== userId);
+    return othersExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+  };
+
+  const calculateBalance = (userId: string) => {
+    const userTotal = calculateTotal(userId);
+    const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
+    const perPersonShare = totalExpenses / people.length;
+    return userTotal - perPersonShare;
   };
 
   const updateExpenseInput = (userId: string, field: keyof ExpenseInput, value: string) => {
@@ -295,24 +301,27 @@ const Index = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {people.map(person => (
-          <WalletCard
-            key={person.id}
-            person={person}
-            total={calculateTotal(person.id)}
-            otherUsersTotal={calculateOthersTotal(person.id)}
-            isActive={activeDropdown === person.id}
-            inputs={expenseInputs[person.id]}
-            onNameChange={(name) => updatePersonName(person.id, name)}
-            onToggleDropdown={() => setActiveDropdown(activeDropdown === person.id ? null : person.id)}
-            onInputChange={(field, value) => updateExpenseInput(person.id, field, value)}
-            onSubmit={() => addExpense(person.id)}
-            onDelete={() => deletePerson(person.id)}
-          />
-        ))}
+        {people.map(person => {
+          const balance = calculateBalance(person.id);
+          return (
+            <WalletCard
+              key={person.id}
+              person={person}
+              total={calculateTotal(person.id)}
+              otherUsersTotal={calculateOthersTotal(person.id)}
+              isActive={activeDropdown === person.id}
+              inputs={expenseInputs[person.id]}
+              onNameChange={(name) => updatePersonName(person.id, name)}
+              onToggleDropdown={() => setActiveDropdown(activeDropdown === person.id ? null : person.id)}
+              onInputChange={(field, value) => updateExpenseInput(person.id, field, value)}
+              onSubmit={() => addExpense(person.id)}
+              onDelete={() => deletePerson(person.id)}
+            />
+          );
+        })}
         <Button
           onClick={addPerson}
-          className="h-full min-h-[200px] flex flex-col gap-2"
+          className="h-full min-h-[200px] flex flex-col gap-2 border-2 border-dashed border-primary/20 hover:border-primary/50 transition-colors"
           variant="outline"
         >
           <Plus className="h-6 w-6" />
@@ -331,28 +340,43 @@ const Index = () => {
             onClick={downloadExpenses}
             className="flex items-center gap-2"
           >
+            <History className="h-4 w-4" />
             Download Expenses
           </Button>
         </div>
-        <div className="space-y-2">
-          {people.map(person => {
-            const total = calculateTotal(person.id);
-            const othersTotal = calculateOthersTotal(person.id);
-            const balance = total - (othersTotal / (people.length - 1));
-            return (
-              <p key={person.id} className="text-lg">
-                <span className="font-semibold">{person.name}</span>:{" "}
-                <span className={`font-bold ${
-                  balance > 0 ? "text-green-600" : 
-                  balance < 0 ? "text-red-600" : 
-                  "text-gray-600"
-                }`}>
-                  ${Math.abs(balance).toFixed(2)}
-                  {balance > 0 ? " (to receive)" : balance < 0 ? " (to pay)" : ""}
-                </span>
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="p-4 bg-secondary/50">
+              <p className="text-sm text-muted-foreground mb-2">Total Expenses</p>
+              <p className="text-2xl font-bold">
+                ${expenses.reduce((acc, curr) => acc + curr.amount, 0).toFixed(2)}
               </p>
-            );
-          })}
+            </Card>
+            <Card className="p-4 bg-secondary/50">
+              <p className="text-sm text-muted-foreground mb-2">Per Person Share</p>
+              <p className="text-2xl font-bold">
+                ${(expenses.reduce((acc, curr) => acc + curr.amount, 0) / people.length).toFixed(2)}
+              </p>
+            </Card>
+          </div>
+          <div className="space-y-3 mt-4">
+            {people.map(person => {
+              const balance = calculateBalance(person.id);
+              return (
+                <div key={person.id} className="flex justify-between items-center p-3 bg-secondary/30 rounded-lg">
+                  <span className="font-semibold">{person.name}</span>
+                  <span className={`font-bold ${
+                    balance > 0 ? "text-green-600" : 
+                    balance < 0 ? "text-red-600" : 
+                    "text-gray-600"
+                  }`}>
+                    ${Math.abs(balance).toFixed(2)}
+                    {balance > 0 ? " (to receive)" : balance < 0 ? " (to pay)" : " (settled)"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </Card>
 
@@ -367,7 +391,7 @@ const Index = () => {
             return (
               <div
                 key={expense.id}
-                className="flex justify-between items-center p-3 bg-secondary rounded-lg animate-fade-in"
+                className="flex justify-between items-center p-4 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors"
               >
                 <div>
                   <p className="font-semibold">{expense.description}</p>
@@ -389,4 +413,3 @@ const Index = () => {
 };
 
 export default Index;
-
