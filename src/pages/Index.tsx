@@ -64,7 +64,8 @@ const WalletCard = memo(({
   onToggleDropdown,
   onInputChange,
   onSubmit,
-  onDelete
+  onDelete,
+  totalPeople
 }: { 
   person: Person;
   total: number;
@@ -76,45 +77,64 @@ const WalletCard = memo(({
   onInputChange: (field: keyof ExpenseInput, value: string) => void;
   onSubmit: () => void;
   onDelete: () => void;
+  totalPeople: number;
 }) => {
-  const balance = total - (otherUsersTotal / 2);
+  const perPersonShare = (total + otherUsersTotal) / totalPeople;
+  const balance = total - perPersonShare;
   const status = balance === 0 ? "neutral" : balance > 0 ? "credit" : "debit";
   
   return (
-    <div className="relative">
-      <Card className="p-6 glass-card hover-scale">
+    <div className="relative group">
+      <Card className="p-6 glass-card transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <WalletCards className="h-5 w-5 text-primary" />
+            <div className="bg-primary/10 p-2 rounded-lg">
+              <WalletCards className="h-5 w-5 text-primary" />
+            </div>
             <Input
               value={person.name}
               onChange={(e) => onNameChange(e.target.value)}
-              className="font-semibold text-xl w-32 px-0"
+              className="font-semibold text-xl w-40 px-2 border-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200"
             />
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onDelete}
-            className="h-8 w-8"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="space-y-2">
-          <p className="text-3xl font-bold">${total.toFixed(2)}</p>
-          <p className={`text-sm font-medium ${
-            status === "credit" ? "text-green-600" : 
-            status === "debit" ? "text-red-600" : 
-            "text-gray-600"
+        <div className="space-y-3">
+          <div className="bg-secondary/30 p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-1">Total Spent</p>
+            <p className="text-3xl font-bold">${total.toFixed(2)}</p>
+          </div>
+          <div className="bg-secondary/30 p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-1">Your Share</p>
+            <p className="text-xl font-semibold">${perPersonShare.toFixed(2)}</p>
+          </div>
+          <div className={`p-3 rounded-lg ${
+            status === "credit" ? "bg-green-100" : 
+            status === "debit" ? "bg-red-100" : 
+            "bg-gray-100"
           }`}>
-            {status === "credit" ? "Credit: " : status === "debit" ? "Debit: " : "Balance: "}
-            ${Math.abs(balance).toFixed(2)}
-          </p>
+            <p className={`text-sm font-medium ${
+              status === "credit" ? "text-green-600" : 
+              status === "debit" ? "text-red-600" : 
+              "text-gray-600"
+            }`}>
+              {status === "credit" ? "You'll Receive: " : 
+               status === "debit" ? "You Owe: " : 
+               "Balance: "}
+              ${Math.abs(balance).toFixed(2)}
+            </p>
+          </div>
         </div>
         <Button
           variant={isActive ? "secondary" : "default"}
-          className="mt-4 w-full"
+          className="mt-4 w-full transition-all duration-200 hover:shadow-md"
           onClick={onToggleDropdown}
         >
           {isActive ? "Cancel" : `Add Expense for ${person.name}`}
@@ -122,7 +142,7 @@ const WalletCard = memo(({
       </Card>
       
       {isActive && (
-        <Card className="absolute top-full left-0 right-0 mt-2 p-4 glass-card z-50 animate-fade-in shadow-xl">
+        <Card className="absolute top-full left-0 right-0 mt-2 p-4 glass-card z-50 shadow-xl animate-fade-in">
           <ExpenseForm
             inputs={inputs}
             onInputChange={onInputChange}
@@ -206,15 +226,14 @@ const Index = () => {
   const renderWalletCard = (person: Person) => {
     const total = calculateTotal(person.id);
     const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
-    const perPersonShare = totalExpenses / people.length;
-    const balance = total - perPersonShare;
+    const othersTotal = totalExpenses - total;
 
     return (
       <WalletCard
         key={person.id}
         person={person}
         total={total}
-        otherUsersTotal={totalExpenses - total}
+        otherUsersTotal={othersTotal}
         isActive={activeDropdown === person.id}
         inputs={expenseInputs[person.id]}
         onNameChange={(name) => updatePersonName(person.id, name)}
@@ -222,6 +241,7 @@ const Index = () => {
         onInputChange={(field, value) => updateExpenseInput(person.id, field, value)}
         onSubmit={() => addExpense(person.id)}
         onDelete={() => deletePerson(person.id)}
+        totalPeople={people.length}
       />
     );
   };
